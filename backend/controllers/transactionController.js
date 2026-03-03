@@ -94,6 +94,15 @@ const requestBook = async (req, res) => {
       return res.status(400).json({ message: 'You already have this book issued' });
     }
     
+    // Check for unpaidfines
+    const unpaidFines = await Transaction.findOne({
+        user: req.user._id,
+        fineAmount: {$gt: 0},
+        finePaid: false
+    });
+    if (unpaidFines) {
+        return res.status(400).json({message: 'Please pay pending fine'})
+    }
     const transaction = await Transaction.create({
       user: req.user._id,
       book: bookId,
@@ -220,7 +229,7 @@ const completeReturn = async (req, res) => {
       return res.status(404).json({ message: 'Transaction not found' });
     }
     
-    if (transaction.type !== 'return' || transaction.status !== 'approved') {
+    if (transaction.type !== 'return' || transaction.status !== 'pending') {
       return res.status(400).json({ message: 'Invalid transaction for completion' });
     }
     
@@ -235,8 +244,13 @@ const completeReturn = async (req, res) => {
       status: 'approved'
     });
     
-    if (issueTransaction && issueTransaction.dueDate < new Date()) {
-      await issueTransaction.checkOverdue();
+    if (issueTransaction) {
+        if(issueTransaction.dueDate < new Date()){
+            await issueTransaction.checkOverdue();
+        };
+        issueTransaction.status = 'completed';
+        issueTransaction.returnedAt = new Date();
+        await issueTransaction.save();
     }
     
     // Update book availability
@@ -246,7 +260,7 @@ const completeReturn = async (req, res) => {
     // Remove from user's issued books
     const user = await User.findById(transaction.user);
     const issuedBookIndex = user.issuedBooks.findIndex(
-      book => book.bookId.toString() === transaction.book.toString() && !book.returned
+      issuedBook => issuedBook.bookId.toString() === transaction.book.toString() && !book.returned
     );
     
     if (issuedBookIndex !== -1) {
@@ -289,6 +303,18 @@ const deleteTransaction = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+// Prevent users from borrowing too many books at once
+const activeIssues = await Transaction.countDocuments({
+  user: req.user._id,
+  status: 'approved',
+  returnedAt: { $exists: false }
+});
+
+if (activeIssues >= 3) {  // Max 3 books at a time
+  return res.status(400).json({ 
+    message: 'Maximum book limit reached. Return a book first.' 
+  });
+}
 
 module.exports = {
   getTransactions,
