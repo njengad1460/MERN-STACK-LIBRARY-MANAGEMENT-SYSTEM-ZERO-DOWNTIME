@@ -304,17 +304,17 @@ const deleteTransaction = async (req, res) => {
   }
 };
 // Prevent users from borrowing too many books at once
-const activeIssues = await Transaction.countDocuments({
-  user: req.user._id,
-  status: 'approved',
-  returnedAt: { $exists: false }
-});
+// const activeIssues = await Transaction.countDocuments({
+//   user: req.user._id,
+//   status: 'approved',
+//   returnedAt: { $exists: false }
+// });
 
-if (activeIssues >= 3) {  // Max 3 books at a time
-  return res.status(400).json({ 
-    message: 'Maximum book limit reached. Return a book first.' 
-  });
-}
+// if (activeIssues >= 3) {  // Max 3 books at a time
+//   return res.status(400).json({ 
+//     message: 'Maximum book limit reached. Return a book first.' 
+//   });
+// }
 
 module.exports = {
   getTransactions,

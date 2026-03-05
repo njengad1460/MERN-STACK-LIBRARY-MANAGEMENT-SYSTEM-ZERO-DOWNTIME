@@ -72,10 +72,11 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash password before saving,,,,, middleware hook — it runs before the document is saved to the database.
-userSchema.pre('save', async function(next) { //Uses a regular function (not arrow function) so this refers to the document.
-  if (!this.isModified('password')) return next(); //check is critical — it prevents re-hashing an already hashed password on unrelated updates.
+userSchema.pre('save', async function() { //Uses a regular function (not arrow function) so this refers to the document.
+  if (!this.isModified('password')) {
+    return;
+  } //check is critical — it prevents re-hashing an already hashed password on unrelated updates.
   this.password = await bcrypt.hash(this.password, 8); //8 is the salt rounds for bcrypt (higher = more secure but slower).
-  next();
 });
 
 // Compare password method
