@@ -1,0 +1,79 @@
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+
+
+// protect routes by verifiying jwt token
+
+const protect = async (req, res, next) => {
+    try {
+        let token;
+
+        if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+            token = req.headers.authorization.split(' ')[1];
+            // .startsWith('Bearer') checks if it starts with "Bearer"
+            // .split(' ') splits by space and grabs the second part (the actual token)
+        }
+        if (!token) {
+            return res.status(401).json({message : 'Not authorized, no token'});
+        }
+
+        // verify token
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        // Get user from token
+
+        req.user = await User.findById(decoded.id).select('-password');
+
+        if (!req.user){
+            return res.status(401).json({message: 'Not authorized, user not found'});
+        }
+
+        if (!req.user.isActive) {
+            return res.status(401).json({message: 'Account is deactivated'});
+        }
+
+        next();
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({message : 'Server error, Not authorized, token Failed'});
+    }
+};
+
+// Admin only middleware 
+const admin = (req, res, next) =>{
+    if (req.user && req.user.role === 'admin'){
+        next();
+    }
+    else {
+        res.status(403).json({message: 'Not authorized as admin'})
+    }
+};
+
+// Generate JWT Token
+
+const generateToken = (id) =>{
+    return jwt.sign({ id }, process.env.JWT_SECRET, {
+        expiresIn: '30d',
+    });
+};
+
+module.exports = { protect, admin, generateToken };
+
+
+// Client Request with Token
+//         ↓
+// Extract token from Authorization header
+//         ↓
+// Token exists? (401 if not)
+//         ↓
+// Verify token with JWT_SECRET (401 if invalid/expired)
+//         ↓
+// Find user in database (401 if not found)
+//         ↓
+// User account active? (401 if deactivated)
+//         ↓
+// ✅ Attach user to req.user
+//         ↓
+// Call next() → Route handler executes
