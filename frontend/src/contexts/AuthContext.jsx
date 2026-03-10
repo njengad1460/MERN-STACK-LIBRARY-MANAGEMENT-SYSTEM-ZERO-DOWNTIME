@@ -4,7 +4,8 @@ import toast from 'react-hot-toast';
 
 const AuthContext = createContext(); // holds the data that you want to be accessible globally without having to pass it through every single component manually
 
-export const useAuth = () => { // you just use useAuth() Instead of importing AuthContext and useContext in every component
+// you just use useAuth() Instead of importing AuthContext and useContext in every component
+export const useAuth = () => { 
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
