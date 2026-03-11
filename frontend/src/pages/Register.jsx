@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Library, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import LoadingSpinner from '../components/LoadingSpinner';
+import LoadingSpinner from '../componets/LoadingSpinner';
 
 
 const Register = () => {
@@ -91,7 +91,7 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
