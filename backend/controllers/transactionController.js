@@ -39,7 +39,7 @@ const getTransactions = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
@@ -65,7 +65,7 @@ const getTransaction = async (req, res) => {
     res.json(transaction);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
@@ -118,7 +118,7 @@ const requestBook = async (req, res) => {
     res.status(201).json(transaction);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
@@ -150,10 +150,16 @@ const updateTransactionStatus = async (req, res) => {
       
       // Update book availability
       const book = await Book.findById(transaction.book);
+      if (!book) {
+        return res.status(404).json({ message: 'Book not found' });
+      }
       await book.issueBook();
       
       // Add to user's issued books
       const user = await User.findById(transaction.user);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
       user.issuedBooks.push({
         bookId: transaction.book,
         issuedAt: transaction.issuedAt,
@@ -173,7 +179,7 @@ const updateTransactionStatus = async (req, res) => {
     res.json(transaction);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
@@ -197,6 +203,18 @@ const returnBook = async (req, res) => {
       return res.status(400).json({ message: 'No active issue found for this book' });
     }
     
+    // Check if return is already pending
+    const existingReturn = await Transaction.findOne({
+      user: req.user._id,
+      book: bookId,
+      type: 'return',
+      status: 'pending'
+    });
+    
+    if (existingReturn) {
+      return res.status(400).json({ message: 'Return request already pending' });
+    }
+    
     // Create return transaction
     const returnTransaction = await Transaction.create({
       user: req.user._id,
@@ -214,7 +232,7 @@ const returnBook = async (req, res) => {
     res.status(201).json(returnTransaction);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
@@ -241,7 +259,8 @@ const completeReturn = async (req, res) => {
       user: transaction.user,
       book: transaction.book,
       type: 'issue',
-      status: 'approved'
+      status: 'approved',
+      returnedAt: { $exists: false }
     });
     
     if (issueTransaction) {
@@ -255,12 +274,18 @@ const completeReturn = async (req, res) => {
     
     // Update book availability
     const book = await Book.findById(transaction.book);
+    if (!book) {
+        return res.status(404).json({ message: 'Book not found' });
+    }
     await book.returnBook();
     
     // Remove from user's issued books
     const user = await User.findById(transaction.user);
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
     const issuedBookIndex = user.issuedBooks.findIndex(
-      issuedBook => issuedBook.bookId.toString() === transaction.book.toString() && !book.returned
+      issuedBook => issuedBook.bookId.toString() === transaction.book.toString() && !issuedBook.returned
     );
     
     if (issuedBookIndex !== -1) {
@@ -274,7 +299,7 @@ const completeReturn = async (req, res) => {
     res.json({ message: 'Return completed successfully', transaction });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 
@@ -300,7 +325,7 @@ const deleteTransaction = async (req, res) => {
     res.json({ message: 'Transaction deleted successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 };
 // Prevent users from borrowing too many books at once

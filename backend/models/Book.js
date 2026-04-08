@@ -42,7 +42,7 @@ const bookSchema = new mongoose.Schema ({
         trim: true
     },
     availability :{
-        totalcopies: {
+        totalCopies: {
             type: Number,
             min: 1,
             default: 1,
@@ -88,7 +88,7 @@ const bookSchema = new mongoose.Schema ({
     },
     featured: { // marks books to display on the homepage/featured section
         type:Boolean,
-        dafault: false
+        default: false
     },
 }, {
     timestamps: true // Auto-adds createdAt and updatedAt
@@ -117,7 +117,7 @@ bookSchema.methods.issueBook = function (){
 bookSchema.methods.returnBook = function (){
     if (this.availability.issuedCopies > 0){
         this.availability.availableCopies += 1;
-        this.availability.issuedCopies -+1;
+        this.availability.issuedCopies -= 1;
         return this.save();
     }
     throw new Error ('Book not eligible to be retuned');

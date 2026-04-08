@@ -98,7 +98,7 @@ const updateBook = async (req, res) => {
     const updatedBook = await Book.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     ).populate('addedBy', 'firstName lastName');
     
     res.json(updatedBook);

@@ -57,7 +57,7 @@ const updateProfile = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.user._id,
       { firstName, lastName, phoneNumber, address },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     ).select('-password');
 
     res.json(user);
@@ -174,7 +174,7 @@ const updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(
       req.params.id,
       { firstName, lastName, role, isActive, phoneNumber, address },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     ).select('-password');
 
     if (!user) {
@@ -247,10 +247,10 @@ const getDashboardStats = async (req, res) => {
         isActive: true
     })
 
-    const overdueBooks = await Book.countDocuments({
-        status: 'aproved',
+    const overdueBooks = await Transaction.countDocuments({
+        status: 'approved',
         type: 'issue',
-        dueDate: { $lt: new date()},
+        dueDate: { $lt: new Date()},
         returnedAt: { $exists: false}
     });
     const totalFinesCollected = await Transaction.aggregate([
@@ -272,8 +272,8 @@ const getDashboardStats = async (req, res) => {
         activeIssues,
         availableBooks,
         overdueBooks,
-        totalFinesCollected: totalFinesCollected?.total || 0,
-        recentTransactios
+        totalFinesCollected: totalFinesCollected[0]?.total || 0,
+        recentTransactions: recentTransactios
     })
     
 

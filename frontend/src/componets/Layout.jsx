@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   BookOpen, 
   Home, 
@@ -12,12 +13,14 @@ import {
   LogOut, 
   Menu, 
   X,
-  Library
+  Library,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 const Layout = () => {
-  const { user, logout, isAdmin } = useAuth(); // Dynamic UI: By pulling user and isAdmin from your context, you can make the layout "smart."
-  // ex you can show the user's name in the header or hide the "Admin Dashboard" link if the user doesn't have the correct permissions.
+  const { user, logout, isAdmin } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -26,7 +29,7 @@ const Layout = () => {
     navigate('/login');
   };
 
-  const navigation = [ // Role-Based Navigation Arrays
+  const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Books', href: '/books', icon: BookOpen },
     { name: 'Profile', href: '/profile', icon: User },
@@ -37,21 +40,30 @@ const Layout = () => {
     { name: 'Transactions', href: '/admin/transactions', icon: FileText },
   ];
 
-  const NavItem = ({ item, mobile = false }) => ( // The Reusable NavItem Component
-    //  DRY (Don't Repeat Yourself): You have two different menus (Desktop and Mobile)
-    <NavLink // Automatic Styling: Unlike a standard Link, NavLink knows if the current URL matches its to prop.
+  const ThemeToggle = ({ mobile = false }) => (
+    <button
+      onClick={toggleTheme}
+      className={`p-2.5 rounded-xl transition-all duration-300 ${
+        mobile 
+          ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' 
+          : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400'
+      }`}
+      title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+    >
+      {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+    </button>
+  );
+
+  const NavItem = ({ item, mobile = false }) => (
+    <NavLink
       to={item.href}
-      className={({ isActive }) => // Your code uses a function inside className to swap styles (e.g., changing colors to primary-700 when active).
-        `group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
-          isActive
-            ? 'bg-primary-100 text-primary-700'
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-        } ${mobile ? 'text-base px-3 py-2' : ''}`
+      className={({ isActive }) => 
+        `sidebar-link ${isActive ? 'sidebar-link-active' : 'sidebar-link-inactive'} ${mobile ? 'text-base' : ''}`
       }
       onClick={() => mobile && setSidebarOpen(false)}
     >
       <item.icon
-        className={`mr-3 shrink-0 h-5 w-5 ${mobile ? 'h-6 w-6' : ''}`}
+        className={`mr-3 shrink-0 h-5 w-5 transition-colors duration-200`}
         aria-hidden="true"
       />
       {item.name}
@@ -59,49 +71,49 @@ const Layout = () => {
   );
 
   return (
-    <div className="h-screen flex bg-gray-50">
+    <div className="h-screen flex bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
       {/* Mobile sidebar overlay */}
       <div
-        className={`fixed inset-0 z-40 lg:hidden ${
-          sidebarOpen ? 'block' : 'hidden'
+        className={`fixed inset-0 z-50 lg:hidden transition-opacity duration-300 ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         <div
-          className="fixed inset-0 bg-gray-600 bg-opacity-75"
-          onClick={() => setSidebarOpen(false)} // It provides a clear visual signal that the background is inactive. 
-                                              // By adding the onClick handler here, you allow users to close the menu simply by tapping anywhere outside of it—a standard mobile behavior users expect.
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-slate-950/60"
+          onClick={() => setSidebarOpen(false)}
         />
         
         {/* Mobile sidebar */}
-        <div className="relative flex-1 flex flex-col max-w-xs w-full bg-white shadow-xl">
-          <div className="absolute top-0 right-0 -mr-12 pt-2">
+        <div className={`relative flex flex-col w-full max-w-xs h-full bg-white dark:bg-slate-900 shadow-2xl transition-transform duration-300 transform ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}>
+          <div className="flex items-center justify-between h-16 px-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-2">
+              <div className="p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                <Library className="h-6 w-6 text-primary-600" />
+              </div>
+              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Library Management System</span>
+            </div>
             <button
-              type="button"
-              className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
               onClick={() => setSidebarOpen(false)}
+              className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
             >
-              <X className="h-6 w-6 text-white" aria-hidden="true" />
+              <X className="h-6 w-6" />
             </button>
           </div>
           
-          <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-            <div className="shrink-0 flex items-center px-4 mb-8">
-              <Library className="h-8 w-8 text-primary-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">LibraryMS</span>
-            </div>
-            
-            <nav className="px-2 space-y-1">
+          <div className="flex-1 overflow-y-auto px-4 py-6">
+            <nav className="space-y-2">
               {navigation.map((item) => (
                 <NavItem key={item.name} item={item} mobile />
               ))}
               
-              {isAdmin && ( // Role-Based Rendering
-              //  uses the isAdmin boolean from your AuthContext to determine whether to show the "Manage Users" and "Transactions" links
-                <div className="pt-4 mt-4 border-t border-gray-200">
-                  <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Admin
+              {isAdmin && (
+                <div className="pt-6 mt-6 border-t border-slate-100 dark:border-slate-800">
+                  <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">
+                    Administration
                   </p>
-                  <div className="mt-2 space-y-1">
+                  <div className="space-y-2">
                     {adminNavigation.map((item) => (
                       <NavItem key={item.name} item={item} mobile />
                     ))}
@@ -111,123 +123,130 @@ const Layout = () => {
             </nav>
           </div>
           
-          <div className="shrink-0 flex border-t border-gray-200 p-4">
-            <div className="flex items-center">
+          <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+            <div className="flex items-center justify-between px-2">
+              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Theme</span>
+              <ThemeToggle mobile />
+            </div>
+            <div className="flex items-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
               <div className="shrink-0">
-                <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
+                <div className="h-10 w-10 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700">
                   <User className="h-6 w-6 text-primary-600" />
                 </div>
               </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-gray-700"> 
-                  {user?.firstName} {user?.lastName} 
+              <div className="ml-3 flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                  {user?.firstName} {user?.lastName}
                 </p>
-                <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{user?.role}</p>
               </div>
+              <button
+                onClick={handleLogout}
+                className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
-            <button
-              onClick={handleLogout}
-              className="ml-auto p-2 text-gray-400 hover:text-gray-600"
-            >
-              <LogOut className="h-5 w-5" />
-            </button>
           </div>
         </div>
       </div>
 
       {/* Desktop sidebar */}
-      <div className="hidden lg:flex lg:shrink-0"> 
-        {/* The lg:flex class tells Tailwind: "Once the screen is at least 1024px wide, stop being hidden and display as a flex container." */}
-        <div className="flex flex-col w-64">
-          {/* By setting a specific width (w-64, which is 16rem or 256px) and using shrink-0, you ensure that the sidebar stays exactly that size. */}
-          <div className="flex flex-col h-0 flex-1 bg-white shadow-sm"> 
-            {/* This block is divided into three distinct vertical zones: */}
-            <div className="flex items-center h-16 shrink-0 px-4 border-b border-gray-200">
-              <Library className="h-8 w-8 text-primary-600" />
-              <span className="ml-2 text-xl font-bold text-gray-900">LibraryMS</span>
-            </div>
-            
-            <div className="flex-1 flex flex-col overflow-y-auto pt-5 pb-4">
-              {/* the overflow-y-auto ensures the sidebar gets its own scrollbar, rather than making the whole page scroll awkwardly. */}
-              <nav className="flex-1 px-2 space-y-1"> 
-                {/* Semantic Navigation */}
-                {navigation.map((item) => (
-                  <NavItem key={item.name} item={item} />
-                ))}
-                
-                {isAdmin && (
-                  <div className="pt-4 mt-4 border-t border-gray-200">
-                    <p className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Admin
-                    </p>
-                    <div className="mt-2 space-y-1">
-                      {adminNavigation.map((item) => (
-                        <NavItem key={item.name} item={item} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </nav>
-            </div>
-            
-            <div className="shrink-0 flex border-t border-gray-200 p-4">
-              <div className="flex items-center w-full">
-                <div className="shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-primary-100 flex items-center justify-center">
-                    <User className="h-6 w-6 text-primary-600" />
-                  </div>
-                </div>
-                <div className="ml-3 flex-1">
-                  <p className="text-sm font-medium text-gray-700">
-                    {user?.firstName} {user?.lastName}
-                  </p>
-                  <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="ml-2 p-2 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100"
-                >
-                  <LogOut className="h-5 w-5" />
-                </button>
+      <div className="hidden lg:flex lg:shrink-0">
+        <div className="flex flex-col w-72 h-full bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center h-20 px-8">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-primary-50 dark:bg-primary-900/20 rounded-xl">
+                <Library className="h-7 w-7 text-primary-600" />
               </div>
+              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">Library Management System</span>
+            </div>
+          </div>
+          
+          <div className="flex-1 flex flex-col overflow-y-auto px-4 py-6">
+            <nav className="space-y-1.5 focus:outline-none">
+              {navigation.map((item) => (
+                <NavItem key={item.name} item={item} />
+              ))}
+              
+              {isAdmin && (
+                <div className="pt-8 mt-8 border-t border-slate-100 dark:border-slate-800">
+                  <p className="px-4 text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">
+                    Administration
+                  </p>
+                  <div className="space-y-1.5">
+                    {adminNavigation.map((item) => (
+                      <NavItem key={item.name} item={item} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </nav>
+          </div>
+          
+          <div className="p-6 space-y-4">
+            <div className="group flex items-center p-3.5 bg-slate-50/80 dark:bg-slate-800/40 rounded-2xl border border-slate-100/50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all duration-300">
+              <div className="shrink-0">
+                <div className="h-11 w-11 rounded-xl bg-white dark:bg-slate-800 shadow-sm flex items-center justify-center border border-slate-100 dark:border-slate-700 group-hover:scale-105 transition-transform duration-300">
+                  <User className="h-6 w-6 text-primary-600" />
+                </div>
+              </div>
+              <div className="ml-3.5 flex-1 min-w-0">
+                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                  {user?.firstName} {user?.lastName}
+                </p>
+                <p className="text-xs font-medium text-slate-400 uppercase tracking-wider">{user?.role}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="ml-2 p-2.5 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all duration-200"
+                title="Sign Out"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex flex-col w-0 flex-1 overflow-hidden">
-        {/* By using flex-1, you’re telling this div: "Take up all the remaining space that the sidebar didn't use." */}
-        {/* Mobile header */}
-        <div className="lg:hidden">
-          <div className="flex items-center justify-between bg-white px-4 py-2 border-b border-gray-200">
-            <button
-              type="button"
-              className="p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500"
-              onClick={() => setSidebarOpen(true)}
-            >
-              <Menu className="h-6 w-6" aria-hidden="true" />
-            </button>
-            
-            <div className="flex items-center">
-              <Library className="h-8 w-8 text-primary-600" />
-              <span className="ml-2 text-lg font-bold text-gray-900">LibraryMS</span>
-            </div>
-            
-            <div className="w-10" /> {/* Spacer for centering */}
+      {/* Main content area */}
+      <div className="flex flex-col flex-1 min-w-0 relative h-full">
+        {/* Mobile top navigation */}
+        <div className="lg:hidden flex items-center justify-between h-16 px-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 z-10 transition-colors">
+          <button
+            type="button"
+            className="p-2 -ml-2 text-slate-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-xl transition-all"
+            onClick={() => setSidebarOpen(true)}
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+          
+          <div className="flex items-center gap-2">
+            <Library className="h-7 w-7 text-primary-600" />
+            <span className="text-lg font-bold text-slate-900 dark:text-white">LMS</span>
           </div>
+          
+          <ThemeToggle />
         </div>
 
-        {/* Page content */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
-          <Outlet />
+        {/* Global Header */}
+        <header className="hidden lg:flex items-center justify-end h-20 px-10 bg-transparent">
+           <ThemeToggle />
+        </header>
+
+        {/* Dynamic page content */}
+        <main className="flex-1 overflow-y-auto focus:outline-none">
+          <div className="max-w-screen-2xl mx-auto h-full min-h-full">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>
   );
 };
 
-export default Layout; 
+export default Layout;
+ 
 
 
 

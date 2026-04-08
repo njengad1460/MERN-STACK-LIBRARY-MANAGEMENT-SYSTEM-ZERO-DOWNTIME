@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Library, Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Library, Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import LoadingSpinner from '../componets/LoadingSpinner';
-
+import libraryBg from '../assets/library_bg.png';
 
 const Register = () => {
-  const [formData, setFormData] = useState({ // Controlled State Management
+  const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
@@ -26,7 +26,6 @@ const Register = () => {
       ...prev,
       [e.target.name]: e.target.value
     }));
-    // Clear error for this field
     if (errors[e.target.name]) {
       setErrors(prev => ({
         ...prev,
@@ -35,287 +34,215 @@ const Register = () => {
     }
   };
 
-  const validateForm = () => { // Client-Side Validation
+  const validateForm = () => {
     const newErrors = {};
-
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
-    }
-
-    if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
-    }
-
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.username.trim()) newErrors.username = 'Username is required';
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^\S+@(student\.)?mmarau\.ac\.ke$/.test(formData.email)) {
-      newErrors.email = 'Invalid Email. Please use your school email (@mmarau.ac.ke or @student.mmarau.ac.ke)';
+      newErrors.email = 'Use school email (@mmarau.ac.ke)';
     }
-
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = 'Min 6 characters';
     }
-
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
+    if (!validateForm()) return;
     setLoading(true);
-    
+    // eslint-disable-next-line no-unused-vars
     const { confirmPassword, ...registrationData } = formData;
     const result = await register(registrationData);
-    // By extracting confirmPassword and using the "rest" operator (...registrationData), it prevent sendind confirm pass to the databse
     if (result.success) {
       navigate('/dashboard');
-    } else{
-      setErrors({server: result.message});
+    } else {
+      setErrors({ server: result.message });
     }
     setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-primary-50 to-blue-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <div className="flex justify-center">
-            <div className="flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full shadow-lg">
-              <Library className="w-8 h-8 text-white" />
+    <div className="min-h-screen flex bg-white dark:bg-slate-950 font-sans overflow-hidden">
+      {/* Left Side: Image & Branding */}
+      <div className="hidden lg:flex lg:w-2/5 relative">
+        <img 
+          src={libraryBg} 
+          alt="Modern Library" 
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 to-primary-900/40 flex flex-col justify-end p-12">
+          <div className="max-w-md">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20">
+                <Library className="w-8 h-8 text-white" />
+              </div>
+              <span className="text-2xl font-bold text-white tracking-tight">Library Management System</span>
             </div>
+            <h1 className="text-4xl font-bold text-white mb-4 leading-tight tracking-tight text-balance">
+              Your Journey into <br />
+              <span className="text-primary-300">Knowledge Starts Here.</span>
+            </h1>
+            <p className="text-base text-primary-100/80 mb-8 max-w-xs">
+              Create an account to unlock full access to our digital and physical collections.
+            </p>
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Create account
-          </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Join our library management system
-          </p>
         </div>
+      </div>
 
-        {/* Form */}
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          <form className="space-y-4" onSubmit={handleSubmit}>
+      {/* Right Side: Registration Form */}
+      <div className="w-full lg:w-3/5 flex flex-col justify-center px-6 sm:px-12 lg:px-24 bg-white dark:bg-slate-900 relative overflow-y-auto py-12">
+        <div className="w-full max-w-md mx-auto">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
+            <div className="p-2 bg-primary-600 rounded-xl">
+              <Library className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-xl font-bold text-slate-900 dark:text-white">EduLib</span>
+          </div>
+
+          <div className="mb-8 text-center lg:text-left">
+            <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Create Account</h2>
+            <p className="text-slate-500 dark:text-slate-400">Join our library management system</p>
+          </div>
+
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {/* Name Fields */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
-                  </div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">First Name</label>
+                <div className="relative group">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary-500" />
                   <input
-                    id="firstName"
                     name="firstName"
                     type="text"
-                    required
-                    className={`input pl-10 ${errors.firstName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
-                    placeholder="First name"
+                    className={`input-modern pl-11 py-2.5 ${errors.firstName ? 'border-red-500 bg-red-50/30' : ''}`}
+                    placeholder="First Name"
                     value={formData.firstName}
                     onChange={handleChange}
                   />
                 </div>
-                {errors.firstName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
-                )}
+                {errors.firstName && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.firstName}</p>}
               </div>
-
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name
-                </label>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Last Name</label>
                 <input
-                  id="lastName"
                   name="lastName"
                   type="text"
-                  required
-                  className={`input ${errors.lastName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
-                  placeholder="Last name"
+                  className={`input-modern py-2.5 ${errors.lastName ? 'border-red-500 bg-red-50/30' : ''}`}
+                  placeholder="Last Name"
                   value={formData.lastName}
                   onChange={handleChange}
                 />
-                {errors.lastName && (
-                  <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
-                )}
+                {errors.lastName && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.lastName}</p>}
               </div>
             </div>
 
             {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
-                </div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Username / Admission Number</label>
+              <div className="relative group">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
                 <input
-                  id="username"
                   name="username"
                   type="text"
-                  required
-                  className={`input pl-10 ${errors.username ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
-                  placeholder="Enter user name as your admission number"
+                  className={`input-modern pl-11 py-2.5 ${errors.username ? 'border-red-500 bg-red-50/30' : ''}`}
+                  placeholder="e.g. SB06/SR/MN/...../...."
                   value={formData.username}
                   onChange={handleChange}
                 />
               </div>
-              {errors.username && (
-                <p className="mt-1 text-sm text-red-600">{errors.username}</p>
-              )}
+              {errors.username && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.username}</p>}
             </div>
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">School Email</label>
+              <div className="relative group">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
                 <input
-                  id="email"
                   name="email"
                   type="email"
-                  autoComplete="email"
-                  required
-                  className={`input pl-10 ${errors.email ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
-                  placeholder="Enter your school Email"
+                  className={`input-modern pl-11 py-2.5 ${errors.email ? 'border-red-500 bg-red-50/30' : ''}`}
+                  placeholder="Your university email"
                   value={formData.email}
                   onChange={handleChange}
                 />
               </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
+              {errors.email && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.email}</p>}
             </div>
 
-            {/* Password */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+            {/* Password Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Password</label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
+                  <input
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    className={`input-modern pl-11 py-2.5 ${errors.password ? 'border-red-500 bg-red-50/30' : ''}`}
+                    placeholder="••••••••"
+                    value={formData.password}
+                    onChange={handleChange}
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 hover:text-primary-500 transition-colors">
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  required
-                  className={`input pl-10 pr-10 ${errors.password ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
-                  placeholder="Enter a strong password"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
-                </button>
+                {errors.password && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.password}</p>}
               </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1.5 ml-1">Confirm</label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary-500 transition-colors" />
+                  <input
+                    name="confirmPassword"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    className={`input-modern pl-11 py-2.5 ${errors.confirmPassword ? 'border-red-500 bg-red-50/30' : ''}`}
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                  />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 hover:text-primary-500 transition-colors">
+                    {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
                 </div>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  required
-                  className={`input pl-10 pr-10 ${errors.confirmPassword ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}`}
-                  placeholder="Confirm your password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
-                </button>
+                {errors.confirmPassword && <p className="text-red-500 text-[10px] mt-1 ml-1 font-medium">{errors.confirmPassword}</p>}
               </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
-              )}
             </div>
 
-            {/* Submit Button */}
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary w-full flex items-center justify-center h-12 text-base"
-              >
-                {loading ? (
-                  <LoadingSpinner size="small" />
-                ) : (
-                  'Create account'
-                )}
-              </button>
-            </div>
+            {errors.server && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-100">
+                <p className="text-red-600 text-[10px] font-medium text-center">{errors.server}</p>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-modern w-full flex items-center justify-center gap-2 mt-2"
+            >
+              {loading ? <LoadingSpinner size="small" /> : (
+                <>Create Account <ArrowRight className="w-4 h-4" /></>
+              )}
+            </button>
           </form>
 
-          {/* Footer */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link 
-                to="/login" 
-                className="font-medium text-primary-600 hover:text-primary-500 transition-colors"
-              >
-                Sign in here
-              </Link>
-            </p>
-          </div>
-        </div>
-
-        {/* Footer text */}
-        <div className="text-center">
-          <p className="text-xs text-gray-500">
-            Library Management System © 2026
+          <p className="mt-8 text-sm text-center text-slate-600 dark:text-slate-400">
+            Already registered?{' '}
+            <Link to="/login" className="font-bold text-primary-600 hover:text-primary-700 transition-colors">
+              Sign in here
+            </Link>
           </p>
         </div>
       </div>
@@ -323,4 +250,5 @@ const Register = () => {
   );
 };
 
-export default Register; 
+export default Register;
+; 
