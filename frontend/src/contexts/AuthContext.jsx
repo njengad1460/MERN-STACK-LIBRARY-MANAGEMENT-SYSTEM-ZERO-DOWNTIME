@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI } from '../services/api';
 import toast from 'react-hot-toast';
@@ -25,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
         try {
             setUser(JSON.parse(userData));
-        } catch (error) {
+        } catch {
             localStorage.removeItem('user');// Verify token is still vali
         } 
         authAPI.getMe()  // send your data to backend to verify the token is still valid
