@@ -18,6 +18,40 @@ import {
   Moon
 } from 'lucide-react';
 
+// ── Defined outside Layout so React Fast Refresh and the linter are happy ──
+
+const ThemeToggle = ({ theme, toggleTheme, mobile = false }) => (
+  <button
+    onClick={toggleTheme}
+    className={`p-2.5 rounded-xl transition-all duration-300 ${
+      mobile 
+        ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' 
+        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400'
+    }`}
+    title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+  >
+    {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+  </button>
+);
+
+const NavItem = ({ item, mobile = false, onClose }) => (
+  <NavLink
+    to={item.href}
+    className={({ isActive }) => 
+      `sidebar-link ${isActive ? 'sidebar-link-active' : 'sidebar-link-inactive'} ${mobile ? 'text-base' : ''}`
+    }
+    onClick={() => mobile && onClose?.()}
+  >
+    <item.icon
+      className={`mr-3 shrink-0 h-5 w-5 transition-colors duration-200`}
+      aria-hidden="true"
+    />
+    {item.name}
+  </NavLink>
+);
+
+// ────────────────────────────────────────────────────────────────────────────
+
 const Layout = () => {
   const { user, logout, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -39,36 +73,6 @@ const Layout = () => {
     { name: 'Manage Users', href: '/admin/users', icon: Users },
     { name: 'Transactions', href: '/admin/transactions', icon: FileText },
   ];
-
-  const ThemeToggle = ({ mobile = false }) => (
-    <button
-      onClick={toggleTheme}
-      className={`p-2.5 rounded-xl transition-all duration-300 ${
-        mobile 
-          ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' 
-          : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400'
-      }`}
-      title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-    >
-      {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-    </button>
-  );
-
-  const NavItem = ({ item, mobile = false }) => (
-    <NavLink
-      to={item.href}
-      className={({ isActive }) => 
-        `sidebar-link ${isActive ? 'sidebar-link-active' : 'sidebar-link-inactive'} ${mobile ? 'text-base' : ''}`
-      }
-      onClick={() => mobile && setSidebarOpen(false)}
-    >
-      <item.icon
-        className={`mr-3 shrink-0 h-5 w-5 transition-colors duration-200`}
-        aria-hidden="true"
-      />
-      {item.name}
-    </NavLink>
-  );
 
   return (
     <div className="h-screen flex bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors duration-300">
@@ -105,7 +109,7 @@ const Layout = () => {
           <div className="flex-1 overflow-y-auto px-4 py-6">
             <nav className="space-y-2">
               {navigation.map((item) => (
-                <NavItem key={item.name} item={item} mobile />
+                <NavItem key={item.name} item={item} mobile onClose={() => setSidebarOpen(false)} />
               ))}
               
               {isAdmin && (
@@ -115,7 +119,7 @@ const Layout = () => {
                   </p>
                   <div className="space-y-2">
                     {adminNavigation.map((item) => (
-                      <NavItem key={item.name} item={item} mobile />
+                      <NavItem key={item.name} item={item} mobile onClose={() => setSidebarOpen(false)} />
                     ))}
                   </div>
                 </div>
@@ -126,7 +130,7 @@ const Layout = () => {
           <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
             <div className="flex items-center justify-between px-2">
               <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Theme</span>
-              <ThemeToggle mobile />
+              <ThemeToggle mobile theme={theme} toggleTheme={toggleTheme} />
             </div>
             <div className="flex items-center p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl">
               <div className="shrink-0">
@@ -226,12 +230,12 @@ const Layout = () => {
             <span className="text-lg font-bold text-slate-900 dark:text-white">LMS</span>
           </div>
           
-          <ThemeToggle />
+          <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
         </div>
 
         {/* Global Header */}
         <header className="hidden lg:flex items-center justify-end h-20 px-10 bg-transparent">
-           <ThemeToggle />
+           <ThemeToggle theme={theme} toggleTheme={toggleTheme} />
         </header>
 
         {/* Dynamic page content */}

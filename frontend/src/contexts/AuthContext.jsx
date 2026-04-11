@@ -19,30 +19,38 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true); // Prevents flash of login page: By defaulting to loading: true, the app avoids briefly showing the login screen before redirecting an already authenticated user.
 
   useEffect(() => { // This is the "Brain" of your auth flow. It runs once when the app starts.
-    // Check if user is logged in on app start
-    const token = localStorage.getItem('token'); 
-    const userData = localStorage.getItem('user');
-    
-    if (token) {
-        try {
-            setUser(JSON.parse(userData));
-        } catch {
-            localStorage.removeItem('user');// Verify token is still vali
-        } 
-        authAPI.getMe()  // send your data to backend to verify the token is still valid
-        .then(response => {
-          setUser(response.data);
-          localStorage.setItem('user', JSON.stringify(response.data));
-        })
-        .catch(() => { // If the token has expired or is invalid, it "cleans up" by removing the dead data from localStorage and setting the user to null
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          setUser(null);
-        })
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    const initializeAuth = async () => {
+      const token = localStorage.getItem('token'); 
+      const userData = localStorage.getItem('user');
+      
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      // Optimistically set user from cache while we verify with backend
+      try {
+        setUser(JSON.parse(userData));
+      } catch {
+        localStorage.removeItem('user');
+      }
+
+      // Verify token is still valid with the backend
+      try {
+        const response = await authAPI.getMe();
+        setUser(response.data);
+        localStorage.setItem('user', JSON.stringify(response.data));
+      } catch {
+        // Token expired or invalid — clean up
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email, password) => {
