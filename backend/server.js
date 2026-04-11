@@ -1,41 +1,47 @@
-const express = require('express');  //Web framework for handling HTTP requests
-const cors = require('cors'); // Allows cross-origin requests (frontend can talk to backend)
+const express = require('express');
+const cors = require('cors');
 const dotenv = require('dotenv');
-const http = require('http');  //  Node's built-in HTTP module (needed for Socket.IO)
-const socketIo = require('socket.io');  // Real-time bidirectional communication library
+const http = require('http');
+const socketIo = require('socket.io');
+const helmet = require('helmet');
+const compression = require('compression');
+const morgan = require('morgan');
 
 // Load env vars
 dotenv.config();
 
-// Import routes  Each file contains route definitions (GET, POST, PUT, DELETE)
+// Import routes
 const authRoutes = require('./routes/authRoutes');
 const bookRoutes = require('./routes/bookRoutes');
 const userRoutes = require('./routes/userRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 
-const app = express();  // This app object handles all HTTP requests,,, it contain middleware and routes
-const server = http.createServer(app);  // Create HTTP Server with Socket.IO
+const app = express();
+const server = http.createServer(app);
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: process.env.CLIENT_URL || "*",
     methods: ["GET", "POST"]
   }
 });
 
 // Middleware
+app.use(helmet()); // Security headers
+app.use(compression()); // Compress responses
+app.use(morgan('combined')); // Request logging
 app.use(cors());
-app.use(express.json()); // Parses incoming JSON request bodies
+app.use(express.json());
 
-// Routes,,, Connects route files to specific URL paths. 
-app.use('/api/auth', authRoutes);  // POST /api/auth/login -> handled by authRoutes
-app.use('/api/books', bookRoutes);  // GET /api/books
-app.use('/api/users', userRoutes); // GET /api/users/:id
-app.use('/api/transactions', transactionRoutes); // POST /api/transactions
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/books', bookRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/transactions', transactionRoutes);
 
-// Health check ,, Creates a simple endpoint to check if the server is running.
+// Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-}); // example curl http://localhost:5000/health
+  res.json({ status: 'OK', timestamp: new Date().toISOString(), env: process.env.NODE_ENV });
+});
 
 // Socket.IO connection
 io.on('connection', (socket) => {
