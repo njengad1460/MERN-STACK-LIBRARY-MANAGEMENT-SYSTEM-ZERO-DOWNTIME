@@ -276,7 +276,7 @@ const AdminTransactions = () => {
     if (!isOpen || !transaction) return null;
 
     return (
-      <div className="fixed inset-0 z-[100] overflow-y-auto">
+      <div className="fixed inset-0 z-100 overflow-y-auto">
         <div className="flex items-center justify-center min-h-screen p-6">
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md dark:bg-slate-950/80" onClick={onClose} />
           
